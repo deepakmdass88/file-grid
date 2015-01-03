@@ -15,6 +15,11 @@ def mongo_conn():
   grid = gridfs.GridFS(db)
   return grid
 
+def mongo_coll():
+  db = Connection().myfiles
+  collection = db.fs.files
+  return collection
+
 @app.route('/upload/', methods=['POST', 'GET'])
 def upload_file():
     if request.method == 'POST':
@@ -68,6 +73,23 @@ def del_files_by_oid(oid):
 	  response = jsonify(result={"status": 200, "description": "File successfully deleted"})
 	  response.status_code = 200
 	  return response
+        except Exception, e:
+          response = jsonify(result={"status": 404, "description": "UH OH File not Found :("})
+          response.status_code = 404
+          return response
+
+@app.route('/file/name/<filename>', methods=['DELETE'])
+def del_files_by_filename(filename):
+    if request.method == 'DELETE':
+        coll = mongo_coll()
+	grid = mongo_conn() 
+	query_file = coll.find_one({"filename": "%s" %filename})
+	mongo_oid = query_file['_id']
+        try:
+          file = grid.delete(mongo_oid)
+          response = jsonify(result={"status": 200, "description": "File successfully deleted"})
+          response.status_code = 200
+          return response
         except Exception, e:
           response = jsonify(result={"status": 404, "description": "UH OH File not Found :("})
           response.status_code = 404
