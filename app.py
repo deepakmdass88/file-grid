@@ -20,10 +20,7 @@ def upload_file():
     if request.method == 'POST':
         file = request.files['file']
 	filename = secure_filename(file.filename)
-	print filename
-	print file
 	grid = mongo_conn()
-	print grid
 	oid = grid.put(file,content_type=file.content_type,filename="%s" %filename)
 	if oid:
  	  response = jsonify(result={"status": 201, "description": "File succesfuly uploaded, RefID: %s" %oid})
@@ -46,6 +43,7 @@ def get_files_by_oid(oid):
           response = jsonify(result={"status": 404, "description": "UH OH File not Found :("})
           response.status_code = 404
           return response
+
 @app.route('/search/file/<filename>', methods=['POST','GET'])
 def get_files_by_filename(filename):
     if request.method == 'GET':
@@ -58,6 +56,22 @@ def get_files_by_filename(filename):
 	  response = jsonify(result={"status": 404, "description": "UH OH File not Found :("})
 	  response.status_code = 404
 	  return response
+
+
+@app.route('/file/oid/<oid>', methods=['DELETE'])
+def del_files_by_oid(oid):
+    if request.method == 'DELETE':
+        mongo_oid = oid
+        grid = mongo_conn()
+        try:
+          file = grid.delete(ObjectId(mongo_oid))
+	  response = jsonify(result={"status": 200, "description": "File successfully deleted"})
+	  response.status_code = 200
+	  return response
+        except Exception, e:
+          response = jsonify(result={"status": 404, "description": "UH OH File not Found :("})
+          response.status_code = 404
+          return response
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
